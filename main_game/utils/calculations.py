@@ -82,3 +82,35 @@ def segment_intersect_rect(rect, seg):
 
     return do_intersect(p1, p2, tl, tr) or do_intersect(p1, p2, tl, bl) or do_intersect(
         p1, p2, tr, br) or do_intersect(p1, p2, bl, br)
+
+
+def rot_center(image, angle):
+    center = image.get_rect().center
+    rotated_image = pygame.transform.rotate(image, angle)
+    new_rect = rotated_image.get_rect(center=center)
+
+    return rotated_image, new_rect
+
+
+def is_on(a, b, c):
+    # (or the degenerate case that all 3 points are coincident)
+    return (collinear(a, b, c)
+            and (within(a.x, c.x, b.x) if a.x != b.x else
+                 within(a.y, c.y, b.y)))
+
+
+def collinear(a, b, c):
+    return (b.x - a.x) * (c.y - a.y) == (c.x - a.x) * (b.y - a.y)
+
+
+def within(p, q, r):
+    return p <= q <= r or r <= q <= p
+
+
+def on_rect(rect, pt):
+    tl = pygame.Vector2(rect.topleft)
+    tr = pygame.Vector2(rect.topright)
+    bl = pygame.Vector2(rect.bottomleft)
+    br = pygame.Vector2(rect.bottomright)
+    pt = pygame.Vector2(pt)
+    return is_on(tl, tr, pt) or is_on(tl, bl, pt) or is_on(tr, br, pt) or is_on(bl, br, pt)

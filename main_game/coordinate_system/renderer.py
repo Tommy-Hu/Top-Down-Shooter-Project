@@ -23,7 +23,17 @@ class Renderer:
             top_left_pos = coordinate.Coordinate.convert_to_screen(top_left_pos,
                                                                    self.center_point_on_screen_in_world_coord,
                                                                    pygame.Vector2(self.half_w, self.half_h))
-        self.canvas.blit(source, top_left_pos)
+        source_rect = source.get_rect()
+        source_rect.topleft = top_left_pos
+        if source_rect.colliderect(self.canvas.get_rect()):
+            self.canvas.blit(source, top_left_pos)
+
+    def draw_line(self, p1, p2, width, color):
+        pygame.draw.line(self.canvas, color,
+                         coordinate.Coordinate.convert_to_screen(p1, self.center_point_on_screen_in_world_coord,
+                                                                 pygame.Vector2(self.half_w, self.half_h)),
+                         coordinate.Coordinate.convert_to_screen(p2, self.center_point_on_screen_in_world_coord,
+                                                                 pygame.Vector2(self.half_w, self.half_h)), width)
 
     def render(self):
         self.surface.blit(self.canvas, (0, 0))

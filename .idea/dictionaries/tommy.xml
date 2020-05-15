@@ -2,6 +2,7 @@
   <dictionary name="tommy">
     <words>
       <w>lerp</w>
+      <w>pathfinding</w>
       <w>topleft</w>
     </words>
   </dictionary>

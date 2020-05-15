@@ -15,3 +15,11 @@ class Wall:
 
     def refresh_location(self, offset):
         self.rect.topleft = self.rect.topleft + offset
+
+    def check_collision_point(self, point):
+        point = pygame.Vector2(point)
+        return self.rect.collidepoint(point.x, point.y)
+
+    def check_collision_rect(self, rect):
+        rect = pygame.Rect(rect)
+        return self.rect.colliderect(rect)

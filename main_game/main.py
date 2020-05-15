@@ -1,8 +1,7 @@
 import pygame
 
 from coordinate_system.renderer import Renderer
-
-from main_game import splash_scene, menu_scene, game
+from main_game import game, menu_scene
 
 clock = pygame.time.Clock()
 renderer = Renderer()
@@ -26,4 +25,4 @@ menu_scene.render(clock, renderer.surface, renderer.w, renderer.h, text_fonts, t
                   button_clicked_audio)
 print "Loaded Into Game!"
 
-game.start_game(renderer, pygame.quit, clock)
+game.start_game(renderer, pygame.quit, clock, pygame)
