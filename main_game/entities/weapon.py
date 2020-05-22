@@ -4,16 +4,21 @@ from main_game.utils import calculations
 
 
 class Weapon:
-    def __init__(self, sprite, projectile, shoot_rate_in_frames, register_projectile, renderer):
+    def __init__(self, sprite, projectile, shoot_rate, register_projectile, renderer, audio_manager,
+                 sound_names=('shoot_1', 'shoot_2'), is_player_weapon=True):
         self.sprite = sprite
-        self.projectile = projectile
-        self.shoot_rate_in_frames = shoot_rate_in_frames
+        self.sprite = pygame.transform.scale(self.sprite, (85, 85))
+        self.projectile = projectile.duplicate(is_player_weapon)
+        self.shoot_rate = shoot_rate
 
+        self.sound_names = sound_names
         self.shoot_cooldown = 0
         self.register_projectile = register_projectile
         self.renderer = renderer
+        self.audio_manager = audio_manager
+        self.is_player_weapon = is_player_weapon
 
-    def update(self, parent_rect, facing, shoot):
+    def update(self, parent_rect, facing, shoot, delta_time):
         self_rect = pygame.Rect((0, 0), self.sprite.get_size())
         self_rect.center = parent_rect.center
         spin_angle = facing.angle_to(pygame.Vector2(1, 0))
@@ -24,10 +29,17 @@ class Weapon:
 
         if self.shoot_cooldown <= 0:
             if shoot:
-                new_p = self.projectile.duplicate()
-                new_p.dir = facing.normalize()
-                new_p.pos = self_rect.center
-                self.register_projectile(new_p)
-                self.shoot_cooldown = self.shoot_rate_in_frames
+                if facing.x != 0 and facing.y != 0:
+                    new_p = self.projectile.duplicate(self.is_player_weapon)
+                    new_p.dir = facing.normalize()
+                    new_p.pos = self_rect.center
+                    self.register_projectile(new_p)
+                self.shoot_cooldown = self.shoot_rate
+                self.audio_manager.play_random_sound_at_channel(self.audio_manager.projectiles_channel,
+                                                                self.sound_names)
         else:
-            self.shoot_cooldown -= 1
+            self.shoot_cooldown -= delta_time
+
+    def duplicate(self, is_player_weapon=False):
+        return Weapon(self.sprite, self.projectile, self.shoot_rate, self.register_projectile, self.renderer,
+                      self.audio_manager, self.sound_names, is_player_weapon)

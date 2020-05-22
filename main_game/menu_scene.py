@@ -6,19 +6,17 @@ from ui_assets import GraphicalControls
 
 refresh = True
 
-mouse_over_button_audio, button_clicked_audio = None, None
+audio_manager = None
+start_game_callback = None
 
 
-def render(clock, surface, w, h, text_fonts, title_font, mouse_over_button_aud, button_clicked_aud):
-    global mouse_over_button_audio
-    global button_clicked_audio
+def render(clock, surface, w, h, text_fonts, title_font, _audio_manager, _start_game_callback):
+    global audio_manager
+    global start_game_callback
 
-    mouse_over_button_audio = mouse_over_button_aud
-    button_clicked_audio = button_clicked_aud
-
-    pygame.mixer.music.load('Assets\\Audios\\Music\\loopTwo.wav')
-    pygame.mixer.music.set_volume(0.25)
-    pygame.mixer.music.play(-1, 0)
+    start_game_callback = _start_game_callback
+    audio_manager = _audio_manager
+    audio_manager.play_music('menu_music', volume=0.1)
 
     title_font.set_bold(False)
 
@@ -65,17 +63,18 @@ def render(clock, surface, w, h, text_fonts, title_font, mouse_over_button_aud, 
 
 
 def play_mouse_over_sound():
-    mouse_over_button_audio.play()
+    audio_manager.play_ui_sound("mouse_over_button_audio")
 
 
 def on_play_button_clicked():
-    button_clicked_audio.play()
+    global start_game_callback
     global refresh
+    audio_manager.play_ui_sound("button_clicked_audio")
     refresh = False
-    pygame.mixer.music.fadeout(1500)
+    start_game_callback()
 
 
 def quit_game():
-    button_clicked_audio.play()
+    audio_manager.play_ui_sound("button_clicked_audio")
     pygame.quit()
     sys.exit(0)

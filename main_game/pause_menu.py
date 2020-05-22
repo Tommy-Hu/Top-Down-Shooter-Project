@@ -13,7 +13,7 @@ def set_buttons(w, h, stop_game_callback, continue_game_callback):
     global pause_quit_button
     global pause_continue_button
 
-    pause_quit_button = GraphicalControls.Button("Quit Game")
+    pause_quit_button = GraphicalControls.Button("Menu")
     pause_continue_button = GraphicalControls.Button("Continue")
 
     pause_quit_button.surface = surface

@@ -1,3 +1,4 @@
+import Queue
 import math
 import sys
 import threading
@@ -41,7 +42,7 @@ class Node:
 
 class Grid:
 
-    def __init__(self, _walls, renderer, _from_vec=(-10000, -10000), _to_vec=(10000, 10000), grid_density=100):
+    def __init__(self, _walls, renderer, _from_vec=(-5000, -5000), _to_vec=(5000, 5000), grid_density=100):
         self.density = grid_density
         self.walls = _walls
         self.from_vec = _from_vec
@@ -49,6 +50,7 @@ class Grid:
         self.renderer = renderer
         self.nodes = []
         self.recalculate()
+        self.LOCK = threading.Lock()
 
     def recalculate(self):
         for y in range(self.from_vec[1], self.to_vec[1] + self.density, self.density):
@@ -68,12 +70,35 @@ class Grid:
             for node in line:
                 node.draw()
 
+    def get_closest_available_node(self, node):
+        nodes_to_do = [node]
+        while True:
+            if len(nodes_to_do) == 0:
+                return None
+            nd = nodes_to_do.pop(0)
+            if nd.walkable:
+                return nd
+            x = nd.x
+            y = nd.y
+
+            if x - 1 >= 0:
+                nodes_to_do.append(self.nodes[nd.x // self.density - 1][nd.y // self.density])
+            if x + 1 < len(self.nodes):
+                nodes_to_do.append(self.nodes[nd.x // self.density + 1][nd.y // self.density])
+            if y - 1 >= 0:
+                nodes_to_do.append(self.nodes[nd.x // self.density][nd.y // self.density - 1])
+            if y + 1 < len(self.nodes):
+                nodes_to_do.append(self.nodes[nd.x // self.density][nd.y // self.density + 1])
+
     def get_path(self, start, end):
-        if not start.walkable or not end.walkable:
+        start = self.get_closest_available_node(start)
+        end = self.get_closest_available_node(end)
+        if start is None or end is None:
             return None
 
-        start = start.duplicate_without_costs()
-        end = end.duplicate_without_costs()
+        with self.LOCK:
+            start = start.duplicate_without_costs()
+            end = end.duplicate_without_costs()
 
         open_set = []
         closed_set = []
@@ -113,10 +138,11 @@ class Grid:
 
                 return path
 
-            x = node.x // self.density - offset[0]
-            y = node.y // self.density - offset[1]
+            with self.LOCK:
+                x = node.x // self.density - offset[0]
+                y = node.y // self.density - offset[1]
 
-            neighbors = self.get_walkable_neighbors(x, y, closed_set)
+                neighbors = self.get_walkable_neighbors(x, y, closed_set)
             for neighbor in neighbors:
                 if node.gcost + 1 < neighbor.gcost or neighbor not in open_set:
                     neighbor = neighbor.duplicate_without_costs()
@@ -127,7 +153,8 @@ class Grid:
                     if neighbor not in open_set:
                         open_set.append(neighbor)
 
-            neighbors = self.get_walkable_neighbors_diagonal(x, y, closed_set)
+            with self.LOCK:
+                neighbors = self.get_walkable_neighbors_diagonal(x, y, closed_set)
             for neighbor in neighbors:
                 if node.gcost + 1 < neighbor.gcost or neighbor not in open_set:
                     neighbor = neighbor.duplicate_without_costs()
@@ -218,34 +245,33 @@ class Path:
 
 class PathsMapper:
     def __init__(self, grid):
-        self.map = []
-        self.is_finished = True
-        self.enemies_left = 0
         self.grid = grid
         self.LOCK = threading.Lock()
-        self.threads_running = []
+        self.queues = (
+            Queue.deque(),
+            Queue.deque(),
+        )
+        self.player = None
+        self.calc_thread_1 = threading.Thread(target=self.get_paths, args=(self.queues[0],))
+        self.calc_thread_1.daemon = True
+        self.calc_thread_2 = threading.Thread(target=self.get_paths, args=(self.queues[1],))
+        self.calc_thread_2.daemon = True
 
-    def get_enemy_path(self, enemy, player, finish_callback):
-        if enemy.next_pt is None:
-            finish_callback(enemy, self.grid.get_path_global_pos(enemy.rect.center, player.rect.center))
+    def get_paths(self, queue):
+        while True:
+            with self.LOCK:
+                if len(queue) <= 0:
+                    continue
+                enemy, finish_callback = queue.pop()
+            if enemy is not None:
+                finish_callback(self.grid.get_path_global_pos(enemy.rect.center, self.player.rect.center))
+
+    def get_enemy_path(self, enemy, finish_callback):
+        if len(self.queues[0]) > len(self.queues[1]):
+            self.queues[1].appendleft((enemy, finish_callback))
         else:
-            finish_callback(enemy, self.grid.get_path_global_pos(enemy.next_pt, player.rect.center))
+            self.queues[0].appendleft((enemy, finish_callback))
 
-    def finish_callback(self, enemy, path):
-        with self.LOCK:
-            self.enemies_left -= 1
-            enemy.update_path(path)
-            self.map.append([enemy, path])
-        if self.enemies_left == 0:
-            self.is_finished = True
-
-    def get_all_enemy_paths(self, enemies, player):
-        self.map = []
-        self.threads_running = []
-        self.is_finished = False
-        self.enemies_left = len(enemies)
-        for enemy in enemies:
-            new_thread = threading.Thread(target=self.get_enemy_path, args=(enemy, player, self.finish_callback))
-            new_thread.daemon = True
-            self.threads_running.append(new_thread)
-            new_thread.start()
+    def start_thread(self):
+        self.calc_thread_1.start()
+        self.calc_thread_2.start()

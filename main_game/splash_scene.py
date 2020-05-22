@@ -1,10 +1,8 @@
 import pygame
 
 
-def splash(clock, surface, title_font, text_fonts):
-    splash_sound = pygame.mixer.Sound('Assets\\Audios\\Music\\win.wav')
-    splash_sound.set_volume(1)
-    splash_sound.play()
+def splash(clock, surface, title_font, text_fonts, audio_manager):
+    audio_manager.play_quick_FX("splash_sound")
 
     w, h = surface.get_size()
 

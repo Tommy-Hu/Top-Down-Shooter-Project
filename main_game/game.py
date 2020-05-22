@@ -1,41 +1,85 @@
-from main_game import pause_menu
+from random import randint
+
+from main_game import pause_menu, death_scene
 from entities.player import Player
 from entities.enemy import Enemy
 from entities.input import input_package
-from entities.wall import Wall
 from main_game.coordinate_system.coordinate import Coordinate
-from main_game.coordinate_system.grid import Grid, PathsMapper
 from main_game.entities.projectile import Projectile
+from main_game.entities.spawner import Spawner
 from main_game.entities.weapon import Weapon
+from main_game.particle_system import particles_manager
+from main_game.ui_system.bars import HealthBar
+from main_game.ui_system.statistics import Statistics
 
 run_game = True
 paused = False
 clock = None
 renderer = None
 pygame = None
+sprites = {}
+audio_manager = None
+menu_callback = None
+restart_callback = None
+bg = None
+fonts = []
+statistics = None
 
 
 def stop_game():
     global run_game
     run_game = False
+    audio_manager.fade_out_music()
 
 
 def continue_game():
     global paused
     paused = False
+    audio_manager.play_music('game_music')
 
 
-def loop():
+def back_to_menu():
+    global run_game
     global paused
+    global menu_callback
 
-    sprites = {
-        "Circle": pygame.image.load("Assets\\Sprites\\Circle.png"),
-        "Rect": pygame.image.load("Assets\\Sprites\\Rectangle.png"),
-        "Onion": pygame.image.load("Assets\\Sprites\\Onion.png"),
-        "Ammo 1": pygame.image.load("Assets\\Sprites\\Ammo 1.png"),
-        "Enemy 1": pygame.image.load("Assets\\Sprites\\Enemy 1.png"),
-        "Alien Launcher": pygame.image.load("Assets\\Sprites\\Alien Launcher.png")
-    }
+    paused = False
+    run_game = False
+    menu_callback()
+
+
+def player_die_callback():
+    global run_game
+    global menu_callback
+    run_game = False
+    death_scene.load(restart_callback, menu_callback, renderer, clock, fonts[1], fonts[0], statistics.enemies_killed)
+
+
+def clear():
+    global run_game
+    global paused
+    global clock
+    global renderer
+    global pygame
+    global sprites
+    global audio_manager
+    global menu_callback
+
+    run_game = True
+    paused = False
+    clock = None
+    renderer = None
+    pygame = None
+    sprites = {}
+    audio_manager = None
+    menu_callback = None
+    particles_manager.clear()
+
+
+def loop(walls, grid, paths_mapper):
+    global paused
+    global sprites
+    global statistics
 
     projectiles = []
 
@@ -43,38 +87,84 @@ def loop():
         projectiles.append(p)
 
     def destroy_projectile(p):
-        projectiles.remove(p)
-
-    walls = [Wall(pygame.Rect(-100, -200, 300, 100), renderer),
-             Wall(pygame.Rect(100, 200, 300, 100), renderer),
-             Wall(pygame.Rect(-300, -500, 500, 200), renderer),
-             Wall(pygame.Rect(600, -200, 400, 100), renderer),
-             Wall(pygame.Rect(-500, -800, 300, 600), renderer)]
-
-    grid = Grid(walls, renderer, grid_density=50)
-    paths_mapper = PathsMapper(grid)
+        try:
+            projectiles.remove(p)
+        except ValueError:
+            pass
 
     weapons = {
         "Alien Launcher": Weapon(sprites["Alien Launcher"],
-                                 Projectile(sprites["Ammo 1"], (0, 0), (0, 0), 15, True, 10, renderer,
-                                            destroy_projectile),
-                                 10, add_projectile, renderer)
+                                 Projectile(sprites["Alien Ammo"], sprites["Alien Ammo Burst"], (0, 0), (0, 0), 2000,
+                                            10, True, 10, renderer,
+                                            destroy_projectile, audio_manager, sprite_scale_multiplier=3,
+                                            burst_scale_multiplier=3),
+                                 0.2, add_projectile, renderer, audio_manager, sound_names=("shoot_1", "shoot_2")),
+        "Durian": Weapon(sprites["Durian"],
+                         Projectile(sprites["Durian"], sprites["Durian"], (0, 0), (0, 0), 1000,
+                                    45, True, 10, renderer,
+                                    destroy_projectile, audio_manager, sprite_scale_multiplier=6,
+                                    burst_scale_multiplier=3),
+                         0.2, add_projectile, renderer, audio_manager, sound_names=("shoot_4",)),
     }
+
+    player = Player(sprites["Player"], sprites["Entity Shadow"], None, pygame.Rect(-50, -50, 100, 100), renderer, 425.0,
+                    weapons["Durian"].duplicate(True), 200, player_die_callback)
+
+    paths_mapper.player = player
+    paths_mapper.start_thread()
+
+    enemy_prefabs = {
+        "Slimy": Enemy(sprites["Slimy Enemy"], sprites["Entity Shadow"], None, pygame.Rect(0, 0, 100, 100), renderer,
+                       325.0, weapons["Alien Launcher"].duplicate(False), 100, grid, paths_mapper, player),
+
+        "Yummy": Enemy(sprites["Yummy Enemy 1"], sprites["Entity Shadow"], sprites["Yummy Enemy 2"],
+                       pygame.Rect(0, 0, 100, 100), renderer, 400.0, weapons["Alien Launcher"].duplicate(False), 100,
+                       grid, paths_mapper, player),
+
+        "Angry": Enemy(sprites["Angry Enemy 1"], sprites["Entity Shadow"], sprites["Angry Enemy 2"],
+                       pygame.Rect(0, 0, 100, 100), renderer, 450.0, weapons["Durian"].duplicate(False), 100, grid,
+                       paths_mapper, player),
+
+        "Squishy": Enemy(sprites["Squishy Enemy"], sprites["Entity Shadow"], None, pygame.Rect(0, 0, 100, 100),
+                         renderer, 300.0, weapons["Alien Launcher"].duplicate(False), 100, grid, paths_mapper, player),
+    }
+
     enemies = [
-        Enemy(sprites["Enemy 1"], pygame.Rect(-1000, -1000, 100, 100), renderer, 4, weapons["Alien Launcher"], grid),
-        Enemy(sprites["Enemy 1"], pygame.Rect(1000, -1000, 100, 100), renderer, 4, weapons["Alien Launcher"], grid),
-        Enemy(sprites["Enemy 1"], pygame.Rect(-1000, 1000, 100, 100), renderer, 4, weapons["Alien Launcher"], grid),
-        Enemy(sprites["Enemy 1"], pygame.Rect(1000, 1000, 100, 100), renderer, 4, weapons["Alien Launcher"], grid),
-        Enemy(sprites["Enemy 1"], pygame.Rect(-2000, -2000, 100, 100), renderer, 4, weapons["Alien Launcher"], grid),
-        Enemy(sprites["Enemy 1"], pygame.Rect(2000, -2000, 100, 100), renderer, 4, weapons["Alien Launcher"], grid),
-        Enemy(sprites["Enemy 1"], pygame.Rect(-2000, 2000, 100, 100), renderer, 4, weapons["Alien Launcher"], grid),
-        Enemy(sprites["Enemy 1"], pygame.Rect(2000, 2000, 100, 100), renderer, 4, weapons["Alien Launcher"], grid)
+        enemy_prefabs["Slimy"].duplicate_as_new(-1000, -1000),
+        enemy_prefabs["Yummy"].duplicate_as_new(1000, -1000),
     ]
 
-    player = Player(sprites["Onion"], pygame.Rect(-50, -50, 100, 100), renderer, 5, weapons["Alien Launcher"])
+    spawners = [
+        Spawner(sprites["Enemy Spawner"], (1000, 1000), (100, 100), renderer, list(enemy_prefabs.values()), 15, 3, 300,
+                enemies.append),
+        Spawner(sprites["Enemy Spawner"], (-1000, 1000), (100, 100), renderer, list(enemy_prefabs.values()), 15, 3, 300,
+                enemies.append),
+        Spawner(sprites["Enemy Spawner"], (-1000, -1000), (100, 100), renderer, list(enemy_prefabs.values()), 15, 3,
+                300,
+                enemies.append),
+        Spawner(sprites["Enemy Spawner"], (1000, -1000), (100, 100), renderer, list(enemy_prefabs.values()), 15, 3, 300,
+                enemies.append),
+    ]
 
-    while run_game:
+    health_bar = HealthBar((100, 100), sprites["Heart"], sprites["Empty Heart"], 50, player.max_health, renderer,
+                           health_per_heart=20)
 
+    mob_cap = 10
+    statistics = Statistics(renderer, fonts[0])
+
+    def kill_enemy(enemy):
+        enemies.remove(enemy)
+        statistics.enemies_killed += 1
+
+    audio_manager.play_music('game_music')
+    while True:
+        global run_game
+
+        if not run_game:
+            break
+
+        delta_time = clock.tick(120) / 1000.0
+        print clock.get_fps()
         x, y = 0, 0
 
         # Initialize Input
@@ -84,6 +174,10 @@ def loop():
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     paused = not paused
+                    if paused:
+                        audio_manager.fade_out_music()
+                    else:
+                        audio_manager.play_music('game_music')
                     pause_menu.refresh_buttons(paused)
 
         keys = pygame.key.get_pressed()
@@ -96,60 +190,116 @@ def loop():
         if keys[pygame.K_a]:
             x -= 1
 
+        # update pause menu
         if paused:
             renderer.surface.fill((200, 200, 200))
             pause_menu.refresh_buttons(paused)
-            clock.tick(60)
             continue
 
+        # initialize environment
         renderer.clear_canvas()
-        renderer.set_center_point_on_screen_in_world_coord(player.rect.center)
 
-        package = input_package(x, y, keys, pygame.mouse.get_pressed(),
+        if bg is not None:
+            renderer.add_to_canvas(bg, (-5000, -5000))
+
+        package = input_package(float(x), float(y), keys, pygame.mouse.get_pressed(),
                                 Coordinate.convert_to_global(pygame.mouse.get_pos(), player.rect.center,
                                                              (renderer.half_w, renderer.half_h)))
-        if paths_mapper.is_finished:
-            paths_mapper.get_all_enemy_paths(enemies, player)
 
-        player.update_with_input(package)
+        player.update_with_input(package, delta_time)  # This needs to be the first in order to calculate world coord.
+        renderer.set_center_point_on_screen_in_world_coord(player.rect.center)
+
+        update_spawners(spawners, delta_time, len(enemies), mob_cap)
         update_walls(walls, player)
-        update_projectiles(projectiles, walls)
-        update_enemies(enemies, player)
+        update_enemies(enemies, player, delta_time, kill_enemy)
+
+        player.draw_self(package, delta_time)
+        update_projectiles(projectiles, walls, enemies, player, delta_time)
+        particles_manager.draw_particles(delta_time)
+        # ^^^ These needs to be the last because otherwise the spawners would appear above the player
+
+        # UI update
+        health_bar.update(player.health, player.max_health)
+        statistics.update()
 
         renderer.render()
-        clock.tick(60)
+    projectiles = []
+    enemies = []
+    del grid
+    del paths_mapper
 
 
-def start_game(_renderer, exit_callback, _clock, _pygame):
+def create_bg(tile_sprite, normalized_size=100):
+    tile_sprite = pygame.transform.scale(tile_sprite, (normalized_size, normalized_size))
+
+    global bg
+    bg = pygame.Surface((normalized_size * 100, normalized_size * 100))
+    half = normalized_size * 100 // 2
+    for y in range(-49, 49):
+        for x in range(-49, 49):
+            bg.blit(get_random_90_rot(tile_sprite), (y * normalized_size + half, x * normalized_size + half))
+
+
+def get_random_90_rot(sprite):
+    degrees = randint(0, 3) * 90
+    return pygame.transform.rotate(sprite, degrees)
+
+
+def start_game(_renderer, exit_callback, _clock, _pygame, _sprites, walls, grid, paths_mapper, _audio_manager,
+               _menu_callback, _restart_callback, _fonts):
+    clear()
     global renderer
     global clock
     global pygame
+    global sprites
+    global audio_manager
+    global menu_callback
+    global restart_callback
+    global fonts
 
+    fonts = _fonts
+    restart_callback = _restart_callback
+    menu_callback = _menu_callback
+    audio_manager = _audio_manager
+    sprites = _sprites
     pygame = _pygame
     clock = _clock
     renderer = _renderer
     pygame.event.pump()
 
-    pause_menu.surface = renderer.surface
-    pause_menu.set_buttons(renderer.w, renderer.h, stop_game, continue_game)
+    create_bg(_sprites['Tile'])
 
-    loop()
+    pause_menu.surface = renderer.surface
+    pause_menu.set_buttons(renderer.w, renderer.h, back_to_menu, continue_game)
+
+    loop(walls, grid, paths_mapper)
 
     exit_callback()
 
 
 def update_walls(walls, player):
+    collide = False
     for wall in walls:
         wall.update_to_renderer()
         if wall.check_collision_rect(player.rect):
-            player.move(-pygame.Vector2(player.last_move_amount))
+            collide = True
+
+    if collide:
+        player.rect.topleft = player.last_pos
 
 
-def update_projectiles(projectiles, walls):
+def update_projectiles(projectiles, walls, enemies, player, delta_time):
+    ch = list(enemies)
+    ch.append(player)
     for p in projectiles:
-        p.update(walls)
+        p.update(walls, ch, delta_time)
 
 
-def update_enemies(enemies, player):
+def update_enemies(enemies, player, delta_time, kill_callback):
     for enemy in enemies:
-        enemy.update(player)
+        enemy.update(delta_time, kill_callback)
+
+
+def update_spawners(spawners, delta_time, current, mob_cap):
+    for spawner in spawners:
+        current = spawner.update(delta_time, current, mob_cap)
