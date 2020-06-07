@@ -2,7 +2,7 @@ import threading
 
 import pygame
 
-from main_game.coordinate_system.grid import Grid, PathsMapper
+from coordinate_system.grid import Grid, PathsMapper
 
 total = 0
 LOCK = threading.Lock()
@@ -27,9 +27,18 @@ def load_images(images):
         pygame.time.delay(10)
 
 
+def load_walls(walls):
+    wall_sprite = images_result["Wall"].convert_alpha()
+    for wall in walls:
+        wall.tile_sprite = wall_sprite
+        wall.create_with_tiles(100)
+
+
 def load_grid(walls, renderer):
     global grid_result
     global paths_mapper_result
+    grid_result = None
+    paths_mapper_result = None
     grid_result = Grid(walls, renderer, grid_density=100)
     update_progress()
     paths_mapper_result = PathsMapper(grid_result)
@@ -52,6 +61,10 @@ def load(walls, images, renderer, change_text_callback):
     load_grid(walls, renderer)
     change_text_callback("Painting visuals and sprites...")
     load_images(images)
+    update_progress()
+    change_text_callback("Loading Walls")
+    load_walls(walls)
+    update_progress()
     change_text_callback("Finalizing...")
     pygame.time.delay(1024)
     update_progress()
@@ -79,7 +92,7 @@ def start_loading(audio_manager, images, finished_loading_callback, renderer, lo
     audio_manager.play_music('loading_loop')
 
     global total
-    total = len(images) + 3
+    total = len(images) + 5
 
     load_thread = threading.Thread(target=load, args=(walls, images, renderer, update_text))
     load_thread.daemon = True

@@ -1,6 +1,6 @@
 import pygame
 
-from main_game.ui_assets.GraphicalControls import Button
+from ui_assets.GraphicalControls import Button
 
 run = True
 

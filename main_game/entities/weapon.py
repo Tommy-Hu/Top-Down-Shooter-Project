@@ -1,6 +1,7 @@
 import pygame
 
-from main_game.utils import calculations
+from entities.laser import Laser
+from utils import calculations
 
 
 class Weapon:
@@ -8,7 +9,10 @@ class Weapon:
                  sound_names=('shoot_1', 'shoot_2'), is_player_weapon=True):
         self.sprite = sprite
         self.sprite = pygame.transform.scale(self.sprite, (85, 85))
-        self.projectile = projectile.duplicate(is_player_weapon)
+        if isinstance(projectile, Laser):
+            self.projectile = projectile.duplicate(is_player_weapon, (0, 0), (1, 0), 1)
+        else:
+            self.projectile = projectile.duplicate(is_player_weapon)
         self.shoot_rate = shoot_rate
 
         self.sound_names = sound_names
@@ -30,9 +34,13 @@ class Weapon:
         if self.shoot_cooldown <= 0:
             if shoot:
                 if facing.x != 0 and facing.y != 0:
-                    new_p = self.projectile.duplicate(self.is_player_weapon)
-                    new_p.dir = facing.normalize()
-                    new_p.pos = self_rect.center
+                    if isinstance(self.projectile, Laser):
+                        new_p = self.projectile.duplicate(self.is_player_weapon, self_rect.center, facing.normalize(),
+                                                          1200)
+                    else:
+                        new_p = self.projectile.duplicate(self.is_player_weapon)
+                        new_p.dir = facing.normalize()
+                        new_p.pos = self_rect.center
                     self.register_projectile(new_p)
                 self.shoot_cooldown = self.shoot_rate
                 self.audio_manager.play_random_sound_at_channel(self.audio_manager.projectiles_channel,

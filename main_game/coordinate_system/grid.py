@@ -5,7 +5,7 @@ import threading
 
 import pygame
 
-from main_game.utils import calculations
+from utils import calculations
 
 
 class Node:
@@ -256,15 +256,18 @@ class PathsMapper:
         self.calc_thread_1.daemon = True
         self.calc_thread_2 = threading.Thread(target=self.get_paths, args=(self.queues[1],))
         self.calc_thread_2.daemon = True
+        self.run_thread = True
 
     def get_paths(self, queue):
-        while True:
+        while self.run_thread:
             with self.LOCK:
                 if len(queue) <= 0:
                     continue
                 enemy, finish_callback = queue.pop()
             if enemy is not None:
-                finish_callback(self.grid.get_path_global_pos(enemy.rect.center, self.player.rect.center))
+                path = self.grid.get_path_global_pos(enemy.rect.center, self.player.rect.center)
+                if enemy is not None and finish_callback is not None:
+                    finish_callback(path)
 
     def get_enemy_path(self, enemy, finish_callback):
         if len(self.queues[0]) > len(self.queues[1]):
@@ -275,3 +278,6 @@ class PathsMapper:
     def start_thread(self):
         self.calc_thread_1.start()
         self.calc_thread_2.start()
+
+    def stop_threads(self):
+        self.run_thread = False

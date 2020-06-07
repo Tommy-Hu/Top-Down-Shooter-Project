@@ -7,13 +7,16 @@ class AudioManager:
     def __init__(self, soundFXs, musics):
         self.soundFXs = soundFXs
         self.musics = musics
+        pygame.mixer.set_num_channels(10)
         self.music_channel_1 = pygame.mixer.Channel(0)
         self.music_channel_2 = pygame.mixer.Channel(1)
         self.ui_fx_channel = pygame.mixer.Channel(2)
         self.projectiles_channel = pygame.mixer.Channel(3)
         self.hit_channel1 = pygame.mixer.Channel(4)
         self.hit_channel2 = pygame.mixer.Channel(5)
-        self.others_channel = pygame.mixer.Channel(6)
+        self.death_channel = pygame.mixer.Channel(6)
+        self.warnings_channel = pygame.mixer.Channel(7)
+        self.pick_ups_channel = pygame.mixer.Channel(8)
         self.current_music_channel = 1
 
         self.music_channel_1.set_volume(0.3)
@@ -21,6 +24,8 @@ class AudioManager:
         self.projectiles_channel.set_volume(0.1)
         self.hit_channel1.set_volume(0.3)
         self.hit_channel2.set_volume(0.3)
+        self.warnings_channel.set_volume(0.25)
+        self.death_channel.set_volume(0.3)
 
     def play_music(self, key, loop=True, fade_time=2000, volume=0.3):
         music = self.musics[key]
@@ -59,6 +64,15 @@ class AudioManager:
 
     def play_quick_FX(self, key):
         self.soundFXs[key].play()
+
+    def play_death_sound(self, key):
+        self.death_channel.play(self.soundFXs[key])
+
+    def play_warning_sound(self, key):
+        self.warnings_channel.play(self.soundFXs[key])
+
+    def play_pickup_sound(self, key):
+        self.pick_ups_channel.play(self.soundFXs[key])
 
     def play_random_sound_at_channel(self, channel, keys):
         key = randint(0, len(keys) - 1)

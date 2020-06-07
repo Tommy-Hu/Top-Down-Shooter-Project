@@ -1,11 +1,12 @@
 import pygame
 
-from main_game.coordinate_system import coordinate
+from coordinate_system import coordinate
 
 
 class Renderer:
     def __init__(self):
-        pygame.mixer.pre_init(44100, -16, 2, 1024)
+        pygame.mixer.pre_init(44100, -16, 10, 1024)
+        pygame.mixer.init(44100, -16, 10, 1024)
         pygame.init()
         pygame.font.init()
 
@@ -15,6 +16,9 @@ class Renderer:
 
         self.canvas = pygame.Surface((self.w, self.h))
         self.center_point_on_screen_in_world_coord = pygame.Vector2(0, 0)
+        self.heart_beats = False
+        self.heart_beat_progress = -0.00001
+        self.heart_increase = False
 
     def clear_canvas(self, color=pygame.Color(255, 255, 255)):
         self.canvas.fill(color)
@@ -26,9 +30,10 @@ class Renderer:
                                                                    pygame.Vector2(self.half_w, self.half_h))
         self.canvas.blit(source, top_left_pos)
 
-    def add_to_canvas_center(self, source, center):
-        center = coordinate.Coordinate.convert_to_screen(center, self.center_point_on_screen_in_world_coord,
-                                                         pygame.Vector2(self.half_w, self.half_h))
+    def add_to_canvas_center(self, source, center, is_global=True):
+        if is_global:
+            center = coordinate.Coordinate.convert_to_screen(center, self.center_point_on_screen_in_world_coord,
+                                                             pygame.Vector2(self.half_w, self.half_h))
         rect = pygame.Rect((0, 0), source.get_rect().size)
         rect.center = center
         self.canvas.blit(source, rect.topleft)
@@ -66,7 +71,13 @@ class Renderer:
         self.canvas.blit(txt, t_rect)
 
     def render(self):
-        self.surface.blit(self.canvas, (0, 0))
+        if self.heart_beats or self.heart_beat_progress > 0:
+            scale = self.heart_beat_progress / 50.0 + 1
+            new_surface = pygame.transform.scale(self.canvas, (int(self.w * scale), int(self.h * scale)))
+            difference = ((self.w - new_surface.get_width()) // 2, (self.h - new_surface.get_height()) // 2)
+            self.surface.blit(new_surface, difference)
+        else:
+            self.surface.blit(self.canvas, (0, 0))
         pygame.display.flip()
 
     def set_center_point_on_screen_in_world_coord(self, world_coord):

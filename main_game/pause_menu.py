@@ -1,6 +1,6 @@
 import pygame
 
-from main_game.ui_assets import GraphicalControls
+from ui_assets import GraphicalControls
 
 surface = None
 pause_quit_button = None

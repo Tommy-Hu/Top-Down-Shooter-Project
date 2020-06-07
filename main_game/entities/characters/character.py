@@ -1,9 +1,11 @@
 import pygame
 
+from particle_system import particles_manager
+
 
 class Character(object):
     def __init__(self, sprite, shadow_sprite, hurt_sprite, rect, renderer, speed, default_weapon, health, scale=100,
-                 hurt_size_increase_multipliers=1.5):
+                 hurt_size_increase_multipliers=1.5, death_audios=None):
         self.normal_sprite = pygame.transform.scale(sprite, (scale, scale))
         self.sprite = pygame.transform.scale(sprite, (scale, scale))
         self.rect = rect
@@ -12,6 +14,7 @@ class Character(object):
         self.health = health
         self.max_health = health
         self.weapon = default_weapon
+        self.death_audios = death_audios
         self.shadow_sprite = pygame.transform.scale(shadow_sprite, (scale, scale))
         if hurt_sprite is not None:
             self.hurt_sprite = pygame.transform.scale(hurt_sprite, (
@@ -30,9 +33,12 @@ class Character(object):
 
     def damage(self, amount):
         self.health -= amount
+        particles_manager.create_blood_particle(self.rect.center)
         if self.hurt_sprite is not None:
             self.sprite = self.hurt_sprite
             self.hurt_change_timer = 0.5
 
     def heal(self, amount):
         self.health += amount
+        if self.health > self.max_health:
+            self.health = self.max_health

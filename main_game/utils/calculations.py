@@ -78,7 +78,7 @@ def segment_intersect_rect(rect, seg):
     br = pygame.Vector2(rect.bottomright)
 
     p1 = pygame.Vector2(seg[0])
-    p2 = pygame.Vector2(seg[0])
+    p2 = pygame.Vector2(seg[1])
 
     return do_intersect(p1, p2, tl, tr) or do_intersect(p1, p2, tl, bl) or do_intersect(
         p1, p2, tr, br) or do_intersect(p1, p2, bl, br)

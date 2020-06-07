@@ -10,7 +10,7 @@ audio_manager = None
 start_game_callback = None
 
 
-def render(clock, surface, w, h, text_fonts, title_font, _audio_manager, _start_game_callback):
+def render(clock, surface, w, h, text_fonts, title_font, _audio_manager, _start_game_callback, game_name):
     global audio_manager
     global start_game_callback
 
@@ -20,7 +20,7 @@ def render(clock, surface, w, h, text_fonts, title_font, _audio_manager, _start_
 
     title_font.set_bold(False)
 
-    title_text = title_font.render('Shape Shooter', True, pygame.Color(0, 0, 0))
+    title_text = title_font.render(game_name, True, pygame.Color("LIGHTYELLOW"))
     title_text_rect = title_text.get_rect()
     title_text_rect.center = (w // 2, h // 4)
 
@@ -48,10 +48,25 @@ def render(clock, surface, w, h, text_fonts, title_font, _audio_manager, _start_
     quit_button.subscribe_on_click(quit_game)
     quit_button.subscribe_on_mouse_over(play_mouse_over_sound)
 
+    lerp_factor = 0
+    increase_lerp = True
+
     while refresh:
+        delta_time = clock.tick(60) / 1000.0
         pygame.event.pump()
 
-        surface.fill((255, 255, 255))
+        surface.fill(lerp_color(pygame.Color(201, 61, 6), pygame.Color(5, 166, 59), lerp_factor))
+
+        if increase_lerp:
+            lerp_factor += delta_time * 0.5
+        else:
+            lerp_factor -= delta_time * 0.5
+        if lerp_factor >= 1:
+            increase_lerp = False
+            lerp_factor = 1
+        elif lerp_factor <= 0:
+            increase_lerp = True
+            lerp_factor = 0
 
         play_button.refresh()
         quit_button.refresh()
@@ -59,7 +74,6 @@ def render(clock, surface, w, h, text_fonts, title_font, _audio_manager, _start_
         surface.blit(title_text, title_text_rect)
 
         pygame.display.flip()
-        clock.tick(60)
 
 
 def play_mouse_over_sound():
@@ -78,3 +92,12 @@ def quit_game():
     audio_manager.play_ui_sound("button_clicked_audio")
     pygame.quit()
     sys.exit(0)
+
+
+def lerp_color(color, to_color, factor):
+    r = [color.r, color.g, color.b]
+    cur = [color.r, color.g, color.b]
+    to = [to_color.r, to_color.g, to_color.b]
+    for i in range(0, 3):
+        r[i] = round(r[i] + factor * (to[i] - cur[i]))
+    return pygame.Color(int(r[0]), int(r[1]), int(r[2]))

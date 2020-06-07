@@ -1,14 +1,14 @@
 import pygame.math
 
-from main_game.entities.player import Player
-from main_game.particle_system import particles_manager
-from main_game.particle_system.paticle import Particle
-from main_game.utils.calculations import *
+from entities.characters.player import Player
+from particle_system import particles_manager
+from particle_system.paticle import Particle
+from utils.calculations import *
 
 
 class Projectile:
     def __init__(self, sprite, burst_sprite, pos, direction, speed, damage, spin, spin_speed, renderer,
-                 destroy_callback,
+                 destroy_callback, hit_sound,
                  audio_manager, is_player=False, life_time=1, sprite_scale_multiplier=1, burst_scale_multiplier=1):
         self.original_sprite = pygame.transform.scale(sprite, (
             sprite.get_width() * sprite_scale_multiplier, sprite.get_height() * sprite_scale_multiplier))
@@ -23,6 +23,7 @@ class Projectile:
         self.spun_degrees = 0
         self.spin_speed = spin_speed
         self.damage = damage
+        self.hit_sound = hit_sound
 
         self.destroy_self = destroy_callback
         self.life_time = life_time
@@ -34,7 +35,7 @@ class Projectile:
         self.burst_sprite = pygame.transform.scale(burst_sprite, (
             burst_sprite.get_width() * burst_scale_multiplier, burst_sprite.get_height() * burst_scale_multiplier))
 
-    def update(self, walls, characters_to_damage, delta_time):
+    def update(self, walls, enemies, player, delta_time):
         new_sprite, new_rect = rot_center(self.original_sprite, self.spun_degrees)
         new_rect.center = self.pos
 
@@ -42,21 +43,27 @@ class Projectile:
             self.destroy_self(self)
             self.shoot_particles(new_rect)
 
-        for ch in characters_to_damage:
-            is_instance_player = type(ch) == Player
-            if (is_instance_player and not self.is_player) or (not is_instance_player and self.is_player):
-                if new_rect.colliderect(ch.rect):
-                    ch.damage(self.damage)
-                    self.destroy_self(self)
+        if self.is_player:
+            for enemy in enemies:
+                if new_rect.colliderect(enemy.rect):
+                    enemy.damage(self.damage)
                     self.shoot_particles(new_rect)
-                    self.audio_manager.play_hit_sound('hit_1')
+                    self.audio_manager.play_hit_sound(self.hit_sound)
+                    self.destroy_self(self)
                     return
+        else:
+            if new_rect.colliderect(player.rect):
+                player.damage(self.damage)
+                self.shoot_particles(new_rect)
+                self.audio_manager.play_hit_sound(self.hit_sound)
+                self.destroy_self(self)
+                return
 
         for wall in walls:
             if wall.check_collision_rect(new_rect):
                 self.destroy_self(self)
                 self.shoot_particles(new_rect)
-                self.audio_manager.play_hit_sound('hit_1')
+                self.audio_manager.play_hit_sound(self.hit_sound)
                 return
 
         self.pos += self.dir * self.speed * delta_time
@@ -67,7 +74,8 @@ class Projectile:
     def duplicate(self, is_player):
         return Projectile(self.original_sprite, self.burst_sprite, self.pos, self.dir, self.speed, self.damage,
                           self.spin, self.spin_speed,
-                          self.renderer, self.destroy_self, self.audio_manager, is_player, self.life_time)
+                          self.renderer, self.destroy_self, self.hit_sound, self.audio_manager, is_player,
+                          self.life_time)
 
     def shoot_particles(self, self_rect):
         if self.renderer.on_screen(self_rect, True):
