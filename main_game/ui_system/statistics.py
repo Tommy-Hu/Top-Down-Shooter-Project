@@ -1,6 +1,7 @@
 import pygame
 
 
+# Contains statistics
 class Statistics:
     def __init__(self, renderer, small_font):
         self.enemies_killed = 0

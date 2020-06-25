@@ -1,6 +1,7 @@
 import pygame
 
 
+# Basic health container class
 class HealthContainer:
     def __init__(self, sprite, pos, scale, value, renderer, destroy_callback, pick_up_sound, audio_manager):
         self.sprite = pygame.transform.scale(sprite, (scale, scale))
@@ -17,6 +18,7 @@ class HealthContainer:
         self.pick_up_sound = pick_up_sound
         self.audio_manager = audio_manager
 
+    # Updates and redraws itself
     def update(self, player, delta_time):
         self.life_time -= delta_time
         if self.life_time <= 0:
@@ -34,11 +36,13 @@ class HealthContainer:
         self.renderer.add_to_canvas_center(pygame.transform.scale(self.sprite, (
             int(self.scale * (self.current_size_percentage + 1)),
             int(self.scale * (self.current_size_percentage + 1)))), self.pos)
+        # Check if the player touched this health pickup
         if player.rect.colliderect(self.rect):
-            player.heal(self.value)
+            player.heal(self.value)  # heals the player
             self.audio_manager.play_pickup_sound(self.pick_up_sound)
             self.destroy_callback(self)
 
+    # Duplicates itself
     def duplicate(self, pos):
         return HealthContainer(self.sprite, pos, self.scale, self.value, self.renderer, self.destroy_callback,
                                self.pick_up_sound, self.audio_manager)

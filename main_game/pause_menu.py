@@ -7,12 +7,14 @@ pause_quit_button = None
 pause_continue_button = None
 
 
+# Initializes the pause menu's buttons
 def set_buttons(w, h, stop_game_callback, continue_game_callback):
     button_size = (w // 7, h // 10)
 
     global pause_quit_button
     global pause_continue_button
 
+    # GraphicalControls is from my own ui pack in the "ui_assets" folder
     pause_quit_button = GraphicalControls.Button("Menu")
     pause_continue_button = GraphicalControls.Button("Continue")
 
@@ -26,6 +28,7 @@ def set_buttons(w, h, stop_game_callback, continue_game_callback):
     pause_continue_button.subscribe_on_click(continue_game_callback)
 
 
+# Refreshes/Re-renders all the buttons
 def refresh_buttons(paused):
     if not paused:
         return
@@ -36,4 +39,5 @@ def refresh_buttons(paused):
     pause_continue_button.refresh()
     pause_quit_button.refresh()
 
+    # Flip redraws ALL the pixels
     pygame.display.flip()

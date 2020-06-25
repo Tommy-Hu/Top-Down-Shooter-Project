@@ -1,3 +1,4 @@
+# Input package is what the input is stored in
 class input_package:
     def __init__(self, x, y, ks, mbs, pos):
         self.move_X = x

@@ -10,6 +10,7 @@ audio_manager = None
 start_game_callback = None
 
 
+# renders the menu
 def render(clock, surface, w, h, text_fonts, title_font, _audio_manager, _start_game_callback, game_name):
     global audio_manager
     global start_game_callback
@@ -51,6 +52,7 @@ def render(clock, surface, w, h, text_fonts, title_font, _audio_manager, _start_
     lerp_factor = 0
     increase_lerp = True
 
+    # Loop to react and re-render all the components of the window
     while refresh:
         delta_time = clock.tick(60) / 1000.0
         pygame.event.pump()
@@ -76,10 +78,12 @@ def render(clock, surface, w, h, text_fonts, title_font, _audio_manager, _start_
         pygame.display.flip()
 
 
+# Plays sound
 def play_mouse_over_sound():
     audio_manager.play_ui_sound("mouse_over_button_audio")
 
 
+# Event/Delegate that is invoked when play button clicked
 def on_play_button_clicked():
     global start_game_callback
     global refresh
@@ -88,12 +92,14 @@ def on_play_button_clicked():
     start_game_callback()
 
 
+# quits the game
 def quit_game():
     audio_manager.play_ui_sound("button_clicked_audio")
     pygame.quit()
     sys.exit(0)
 
 
+# Linearly interpolate two colors by factor
 def lerp_color(color, to_color, factor):
     r = [color.r, color.g, color.b]
     cur = [color.r, color.g, color.b]

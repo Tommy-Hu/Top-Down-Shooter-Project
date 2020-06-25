@@ -1,6 +1,8 @@
 from pygame import Vector2
 
 
+# LOTS OF MATH and basically converts screen coords to my own world coords. This is done so that the game
+# "follows" the player.
 class Coordinate:
 
     @staticmethod

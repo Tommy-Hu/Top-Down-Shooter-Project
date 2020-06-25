@@ -1,6 +1,7 @@
 import pygame
 
 
+# Starts the splash screen
 def splash(clock, surface, title_font, text_fonts, audio_manager, game_name):
     audio_manager.play_quick_FX("splash_sound")
 
@@ -20,6 +21,11 @@ def splash(clock, surface, title_font, text_fonts, audio_manager, game_name):
     title_text_rect.center = (w // 2, h // 4)
     author_text_rect.center = (int(w // 1.5), int(h // 1.5))
 
+    #
+    #
+    # All of these are just for looks
+    #
+    #
     for i in range(0, 127):
         pygame.event.pump()
         current_color = pygame.Color(i * 2, i * 2, 255)
@@ -63,8 +69,10 @@ def splash(clock, surface, title_font, text_fonts, audio_manager, game_name):
         pygame.display.flip()
         clock.tick(60)
 
+    # PLays the thundering sound
     audio_manager.play_quick_FX('thunder')
 
+    # Below are the flashes you see in the splash screen
     surface.fill(pygame.Color(133, 9, 9))
     title_text = title_font.render(game_name, True, (84, 0, 0))
     surface.blit(title_text, title_text_rect)
@@ -99,5 +107,6 @@ def splash(clock, surface, title_font, text_fonts, audio_manager, game_name):
     title_text = title_font.render(game_name, True, (255, 255, 255))
     surface.blit(title_text, title_text_rect)
     pygame.display.flip()
+    # Pumps the events so that the window is not "Not Responding"
     pygame.event.pump()
     clock.tick(0.5)

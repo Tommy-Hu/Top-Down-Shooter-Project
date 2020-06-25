@@ -4,6 +4,7 @@ import pygame
 
 
 class AudioManager:
+    # Creates a audio manager. The audio manager controls all the channels.
     def __init__(self, soundFXs, musics):
         self.soundFXs = soundFXs
         self.musics = musics
@@ -27,6 +28,7 @@ class AudioManager:
         self.warnings_channel.set_volume(0.25)
         self.death_channel.set_volume(0.3)
 
+    # Plays music on the music channel
     def play_music(self, key, loop=True, fade_time=2000, volume=0.3):
         music = self.musics[key]
         if self.current_music_channel == 1:
@@ -46,6 +48,7 @@ class AudioManager:
             else:
                 self.music_channel_1.play(Sound=music, fade_ms=fade_time)
 
+    # As name suggests
     def fade_out_music(self, time=2000):
         self.music_channel_1.fadeout(time)
         self.music_channel_2.fadeout(time)
@@ -62,6 +65,7 @@ class AudioManager:
         else:
             self.hit_channel2.play(self.soundFXs[key])
 
+    # Plays a sound on a random and free channel
     def play_quick_FX(self, key):
         self.soundFXs[key].play()
 
@@ -74,6 +78,7 @@ class AudioManager:
     def play_pickup_sound(self, key):
         self.pick_ups_channel.play(self.soundFXs[key])
 
+    # Plays a random sound in a list on a specific channel
     def play_random_sound_at_channel(self, channel, keys):
         key = randint(0, len(keys) - 1)
         channel.play(self.soundFXs[keys[key]])

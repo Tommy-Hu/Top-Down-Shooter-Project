@@ -14,6 +14,7 @@ paths_mapper_result = None
 draw_text = ""
 
 
+# Load images on a separate thread
 def load_images(images):
     global images_result
     images_result = {}
@@ -27,6 +28,7 @@ def load_images(images):
         pygame.time.delay(10)
 
 
+# Loads walls on a separate thread
 def load_walls(walls):
     wall_sprite = images_result["Wall"].convert_alpha()
     for wall in walls:
@@ -34,6 +36,7 @@ def load_walls(walls):
         wall.create_with_tiles(100)
 
 
+# Loads grid on a separate thread. This is a huge grid, so multi-threading is required.
 def load_grid(walls, renderer):
     global grid_result
     global paths_mapper_result
@@ -56,6 +59,7 @@ def update_text(t):
     draw_text = t
 
 
+# Starts loading.(This is running on a separate thread)
 def load(walls, images, renderer, change_text_callback):
     change_text_callback("Tidying up the grid...")
     load_grid(walls, renderer)
@@ -70,6 +74,7 @@ def load(walls, images, renderer, change_text_callback):
     update_progress()
 
 
+# Clears memory, and locks threads. (Gives me the lock instance)
 def clear():
     global total
     global LOCK
@@ -94,7 +99,9 @@ def start_loading(audio_manager, images, finished_loading_callback, renderer, lo
     global total
     total = len(images) + 5
 
+    # Load on a separate thread.
     load_thread = threading.Thread(target=load, args=(walls, images, renderer, update_text))
+    # Daemon means python would kill the thread automatically when it ends or when the python program ends.
     load_thread.daemon = True
     load_thread.start()
 
@@ -105,6 +112,7 @@ def start_loading(audio_manager, images, finished_loading_callback, renderer, lo
     while True:
         global current
         global draw_text
+        # Pumping the events so that the window is not "Not Responding"
         pygame.event.pump()
 
         if increase_factor:
@@ -130,9 +138,11 @@ def start_loading(audio_manager, images, finished_loading_callback, renderer, lo
             break
 
     global images_result
+    # Goes the game.py's start_game() method
     finished_loading_callback(images_result, grid_result, paths_mapper_result, walls)
 
 
+# Linearly interpolate two colors by a factor(Math stuff)
 def lerp_color(color, to_color, factor):
     r = [color.r, color.g, color.b]
     cur = [color.r, color.g, color.b]

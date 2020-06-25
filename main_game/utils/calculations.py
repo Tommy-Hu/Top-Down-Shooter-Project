@@ -84,6 +84,7 @@ def segment_intersect_rect(rect, seg):
         p1, p2, tr, br) or do_intersect(p1, p2, bl, br)
 
 
+# Rotate from center
 def rot_center(image, angle):
     center = image.get_rect().center
     rotated_image = pygame.transform.rotate(image, angle)
@@ -99,14 +100,17 @@ def is_on(a, b, c):
                  within(a.y, c.y, b.y)))
 
 
+# Collinear
 def collinear(a, b, c):
     return (b.x - a.x) * (c.y - a.y) == (c.x - a.x) * (b.y - a.y)
 
 
+# Is inside range
 def within(p, q, r):
     return p <= q <= r or r <= q <= p
 
 
+# Is on rect. In Python 3, there is already this method, so please use python 3 next year!!!
 def on_rect(rect, pt):
     tl = pygame.Vector2(rect.topleft)
     tr = pygame.Vector2(rect.topright)

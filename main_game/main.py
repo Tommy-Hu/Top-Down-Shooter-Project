@@ -1,4 +1,5 @@
 # The Last Defender, by Tommy Hu
+# All this class does is to grab all the assets and load the appropriate scene
 
 import pygame
 
@@ -13,6 +14,7 @@ renderer = Renderer()
 
 pygame = renderer.get_pygame()
 
+# Grab all the assets
 title_font = pygame.font.Font("Assets\\Fonts\\plexifont.ttf", renderer.h / 6)
 text_fonts = (
     pygame.font.Font("Assets\\Fonts\\whitrabt.ttf", renderer.h / 20),  # small
@@ -28,6 +30,7 @@ soundFXs = {
     "player_hurt_1": pygame.mixer.Sound(audio_root + 'SoundFX\\Player Hurt 1.wav'),
     "player_hurt_2": pygame.mixer.Sound(audio_root + 'SoundFX\\Player Hurt 2.wav'),
     "thunder": pygame.mixer.Sound(audio_root + 'SoundFX\\Thunder.ogg'),
+    "coin_pickup": pygame.mixer.Sound(audio_root + 'SoundFX\\Coin Pickup.wav'),
     "shoot_1": pygame.mixer.Sound(audio_root + 'SoundFX\\Shoot 1.wav'),
     "shoot_2": pygame.mixer.Sound(audio_root + 'SoundFX\\Shoot 2.wav'),
     "shoot_3": pygame.mixer.Sound(audio_root + 'SoundFX\\Shoot 3.wav'),
@@ -47,13 +50,14 @@ musics = {
 
 audio_manager = audio.AudioManager(soundFXs, musics)
 
-# pygame.mouse.set_visible(False)
-# splash_scene.splash(clock, renderer.surface, title_font, text_fonts, audio_manager, game_name)
-# print "Splash Screen Finished"
+pygame.mouse.set_visible(False)
+splash_scene.splash(clock, renderer.surface, title_font, text_fonts, audio_manager, game_name)
+print "Splash Screen Finished"
 
 pygame.mouse.set_visible(True)
 
 
+# Load into the game
 def load_to_game():
     walls = [Wall(pygame.Rect(-100, -200, 300, 100), renderer),
              Wall(pygame.Rect(100, 200, 300, 100), renderer),
@@ -68,6 +72,37 @@ def load_to_game():
              Wall(pygame.Rect(-2000, 3700, 300, 1000), renderer),
              Wall(pygame.Rect(2000, 3700, 300, 1000), renderer),
              Wall(pygame.Rect(2000, -3700, 300, 1000), renderer),
+             Wall(pygame.Rect(4300, -4300, 100, 100), renderer),
+             Wall(pygame.Rect(-2000, -2900, 100, 100), renderer),
+             Wall(pygame.Rect(4500, -900, 100, 100), renderer),
+             Wall(pygame.Rect(400, -500, 100, 100), renderer),
+             Wall(pygame.Rect(-1400, 4500, 100, 100), renderer),
+             Wall(pygame.Rect(3800, -2900, 100, 100), renderer),
+             Wall(pygame.Rect(-1900, 3100, 100, 100), renderer),
+             Wall(pygame.Rect(-4700, 4400, 100, 100), renderer),
+             Wall(pygame.Rect(-4300, 2300, 100, 100), renderer),
+             Wall(pygame.Rect(-2300, 2000, 100, 100), renderer),
+             Wall(pygame.Rect(-1200, -4800, 100, 100), renderer),
+             Wall(pygame.Rect(1100, -3000, 100, 100), renderer),
+             Wall(pygame.Rect(1500, -3400, 100, 100), renderer),
+             Wall(pygame.Rect(3600, 4600, 100, 100), renderer),
+             Wall(pygame.Rect(3700, 800, 100, 100), renderer),
+             Wall(pygame.Rect(-4500, -3400, 100, 100), renderer),
+             Wall(pygame.Rect(2000, 2000, 100, 100), renderer),
+             Wall(pygame.Rect(4800, -4700, 100, 100), renderer),
+             Wall(pygame.Rect(-1500, 3000, 100, 100), renderer),
+             Wall(pygame.Rect(-1700, 2700, 100, 100), renderer),
+             Wall(pygame.Rect(4300, 3600, 100, 100), renderer),
+             Wall(pygame.Rect(4600, 2300, 100, 100), renderer),
+             Wall(pygame.Rect(2700, 3700, 100, 100), renderer),
+             Wall(pygame.Rect(-1400, 3700, 100, 100), renderer),
+             Wall(pygame.Rect(500, -1100, 100, 100), renderer),
+             Wall(pygame.Rect(3900, -4100, 100, 100), renderer),
+             Wall(pygame.Rect(2900, -4900, 100, 100), renderer),
+             Wall(pygame.Rect(4600, -1300, 100, 100), renderer),
+             Wall(pygame.Rect(4300, 2000, 100, 100), renderer),
+             Wall(pygame.Rect(3700, -1200, 100, 100), renderer),
+
              # Boundaries
              Wall(pygame.Rect(-5000, -5000, 100, 10000), renderer),
              Wall(pygame.Rect(-5000, -5000, 10000, 100), renderer),
@@ -75,11 +110,16 @@ def load_to_game():
              Wall(pygame.Rect(4900, -5000, 100, 10000), renderer)
              ]
 
+    # This dictionary contains all the paths of the picture assets
     s_paths = {"Circle": "Assets\\Sprites\\Circle.png",
                "Rect": "Assets\\Sprites\\Rectangle.png",
                "Smoke 1": "Assets\\Sprites\\Smoke 1.png",
                "Wall": "Assets\\Sprites\\Wall.png",
                "Rock 1": "Assets\\Sprites\\Rock 1.png",
+               "Coin 1": "Assets\\Sprites\\Coin 1.png",
+               "Coin 2": "Assets\\Sprites\\Coin 2.png",
+               "Coin 3": "Assets\\Sprites\\Coin 3.png",
+               "Coin 4": "Assets\\Sprites\\Coin 4.png",
                "Boss Bar": "Assets\\Sprites\\Boss Bar.png",
                "Boss Bar Sides": "Assets\\Sprites\\Boss Bar Sides.png",
                "Boss Bar Part": "Assets\\Sprites\\Boss Bar Part.png",
@@ -112,6 +152,7 @@ def load_to_game():
                                      text_fonts[1], clock, walls)
 
 
+# Starts the game
 def start_game(sprites, grid, paths_mapper, walls):
     game.run_game = True
     game.clear()
@@ -130,6 +171,7 @@ def show_menu():
                       audio_manager, load_to_game, game_name)
 
 
+# This is where the program first goes to
 show_menu()
 pygame.mouse.set_visible(False)
 print "Loading Sprites"

@@ -3,6 +3,7 @@ import math
 import pygame
 
 
+# Class that defines the health bar you see on the top left
 class HealthBar:
     def __init__(self, location, heart_sprite, empty_heart_sprite, scale, max_health, renderer, health_per_heart=20):
         self.heart_sprite = pygame.transform.scale(heart_sprite, (scale, scale))
@@ -13,6 +14,7 @@ class HealthBar:
         self.health_per_heart = health_per_heart
         self.renderer = renderer
 
+    # Updates and redraws itself. Called from the game.py's loop() function
     def update(self, current_health, max_health):
         total_heart_count = int(math.ceil(max_health / float(self.health_per_heart)))
         alive_heart_count = int(math.ceil(current_health / float(self.health_per_heart)))
@@ -29,6 +31,7 @@ class HealthBar:
             pos_x += self.scale + 30
 
 
+# Class that defines the bossbar you see when the boss fight is happening
 class BossBar:
     def __init__(self, location_center, side_sprite, main_sprite, part_sprite, scale_x, scale_y, size_dif_half, maximum,
                  renderer):
@@ -44,8 +47,10 @@ class BossBar:
         self.surface = None
         self.redraw_surface(maximum)
 
+    # Redraws itself
     def redraw_surface(self, current):
         self.surface = pygame.Surface((self.scale_x, self.scale_y))
+        # Color key defines which color is transparent
         self.surface.set_colorkey((0, 0, 0))
         self.part_sprite = self.part_sprite
         self.surface.blit(
@@ -60,6 +65,7 @@ class BossBar:
             pygame.transform.flip(pygame.transform.scale(self.side_sprite, (self.scale_y, self.scale_y)), True, True),
             (self.scale_x - self.scale_y, 0))
 
+    # Updates and redraws itself. Called from the game.py's loop() function
     def update(self, current):
         self.redraw_surface(current)
         self.renderer.add_to_canvas_center(self.surface, self.location_center, False)

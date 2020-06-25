@@ -2,6 +2,10 @@ import pygame
 from Control import *
 
 
+#
+# UI Assets
+# By Tommy Hu
+#
 # Inherited from Control class
 class Label(Control):
 
@@ -10,6 +14,7 @@ class Label(Control):
         self.text = ""
 
 
+# Basic ProgressBar class
 class ProgressBar(Control):
 
     def __init__(self, maximum=100.0, current=0.0):
@@ -58,6 +63,7 @@ class ProgressBar(Control):
         self.finish_event_list.remove(func)
 
 
+# Basic Button class
 class Button(Control):
     def __init__(self, caption="Click me!"):
         Control.__init__(self)
@@ -146,6 +152,7 @@ class Button(Control):
         self.on_mouse_leave_list.remove(func)
 
 
+# Basic InputField class
 class InputField(Control):
 
     def __init__(self, text=""):

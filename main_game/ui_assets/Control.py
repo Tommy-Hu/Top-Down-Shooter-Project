@@ -1,6 +1,9 @@
 from pygame import *
 
 
+#
+# UI Assets
+# By Tommy Hu
 class Control:
 
     def __init__(self):

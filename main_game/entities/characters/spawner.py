@@ -5,6 +5,7 @@ import pygame
 from particle_system.paticle import Particle
 
 
+# Defines a spawner object
 class Spawner:
     def __init__(self, sprite, location, scale, renderer, enemies_to_spawn, spawn_interval, spawn_amount, spawn_range,
                  add_enemy_callback, smoke_sprite, add_particle_callback):
@@ -19,10 +20,12 @@ class Spawner:
         self.smoke_sprite = pygame.transform.scale(smoke_sprite, (75, 75))
         self.spawn_timer = 0
 
+    # Gets a random location in range. This is used to spawn in enemies near the spawners.
     def get_random_location_in_range(self):
         return self.location[0] + random.randint(-self.spawn_range, self.spawn_range), self.location[
             1] + random.randint(-self.spawn_range, self.spawn_range)
 
+    # Updates this spawner
     def update(self, delta_time, current_count, mob_cap, spawn):
         self.renderer.add_to_canvas(self.sprite, self.location)
 
@@ -35,8 +38,10 @@ class Spawner:
                         return False
                 return True
 
+            # If there are too many enemies(more than mob_cap), then don't spawn and return
             if current_count >= mob_cap:
                 return current_count
+            # Can spawn? Timer counts down.
             if self.spawn_timer <= 0:
                 self.spawn_timer = self.spawn_interval
                 spawn_count = random.randint(1, self.spawn_amount)
@@ -51,7 +56,7 @@ class Spawner:
                     if current_count >= mob_cap:
                         return current_count
 
-            self.spawn_timer -= delta_time
+            self.spawn_timer -= delta_time  # deltatime is the time in seconds it takes to finish the last frame.
         else:
             self.spawn_timer = 0
         return current_count

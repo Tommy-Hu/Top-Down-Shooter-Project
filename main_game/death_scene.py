@@ -5,6 +5,7 @@ from ui_assets.GraphicalControls import Button
 run = True
 
 
+# Loads into the death scene.
 def load(restart_callback, main_menu_callback, renderer, clock, big_font, small_font, enemies_killed):
     def restart():
         restart_callback()
@@ -27,6 +28,7 @@ def load(restart_callback, main_menu_callback, renderer, clock, big_font, small_
         pygame.display.flip()
         clock.tick(60)
 
+    # Creates UI with my own ui pack
     restart_button = Button("Restart")
     restart_button.surface = renderer.canvas
     restart_rect = pygame.Rect(0, 0, renderer.w // 8, renderer.h // 12)
@@ -38,6 +40,7 @@ def load(restart_callback, main_menu_callback, renderer, clock, big_font, small_
     restart_button.pressed_color = pygame.Color('DARKMAGENTA')
     restart_button.rim_color = pygame.Color('DARKSLATEBLUE')
 
+    # Creates more UI with my own ui pack
     main_button = Button("Menu")
     main_button.surface = renderer.canvas
     main_rect = pygame.Rect(0, 0, renderer.w // 8, renderer.h // 12)
@@ -49,6 +52,7 @@ def load(restart_callback, main_menu_callback, renderer, clock, big_font, small_
     main_button.pressed_color = pygame.Color('RED')
     main_button.rim_color = pygame.Color('FIREBRICK')
 
+    # Renders the scene until player clicked ok.
     while True:
         renderer.clear_canvas(pygame.Color('DARKRED'))
 
@@ -56,8 +60,10 @@ def load(restart_callback, main_menu_callback, renderer, clock, big_font, small_
                                      pygame.Color('BLACK'), (renderer.half_w, renderer.half_h // 4))
         renderer.draw_text_ui_center("YOU TRIED BUT NOT HARD ENOUGH! Enemies killed: " + str(enemies_killed),
                                      small_font, pygame.Color('BLACK'), (renderer.half_w, renderer.half_h // 1.25))
+        # Refreshed the ui
         restart_button.refresh()
         main_button.refresh()
+        # Pumping the input so that the window is not "Not Responding".
         pygame.event.pump()
 
         renderer.render()

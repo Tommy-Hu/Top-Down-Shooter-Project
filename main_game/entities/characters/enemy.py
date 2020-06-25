@@ -6,10 +6,11 @@ from entities.characters.character import Character
 from entities.pickups.weapon_pickup import WeaponPickUp
 
 
+# Basic enemy class that inherits from the character class
 class Enemy(Character):
     def __init__(self, sprite, shadow_sprite, hurt_sprite, rect, renderer, speed, weapon, health, grid, mapper, player,
                  pathfinding_skip_threshold=50, attack_range=500, shoot_rate_decrease_percentage=50, death_audios=None,
-                 health_drop_amount_max=1, scale=100):
+                 health_drop_amount_max=1, scale=100, coin_drop_amount_max=2):
         self.weapon_original_shoot_rate = weapon.shoot_rate + 0.0
 
         Character.__init__(self, sprite, shadow_sprite, hurt_sprite, rect, renderer, speed, weapon, health, scale,
@@ -25,27 +26,37 @@ class Enemy(Character):
         self.player = player
         self.path_calculating = False
         self.health_drop_amount_max = health_drop_amount_max
+        self.coin_drop_amount_max = coin_drop_amount_max
 
+        # Check when to calculate a new path. You cannot calculate a new path all the time because your computer's
+        # CPU would start burning. Only update the path when next_update is zero, otherwise, just decrease it by the FPS
+        # / 1000.0
         self.next_update = 0
 
+    # Requests a new path from paths_mapper
     def calculate_path(self):
         self.path_calculating = True
         self.mapper.get_enemy_path(self, self.finish_calc_path)
 
+    # Callback that sets the current path to path
     def finish_calc_path(self, path):
         self.path = path
         self.path_calculating = False
         self.next_update = 1
 
+    # Moves this enemy
     def move(self, offset):
         Character.move(self, (self.rect.topleft[0] + offset[0], self.rect.topleft[1] + offset[1]))
 
     def update_path(self, path):
         self.path = path
 
+    # Renders this enemy.
     def draw(self):
+        # This function is written in the super class: Character
         Character.draw_to_renderer(self)
 
+    # Updates itself
     def update(self, delta_time, kill_callback, weapon_pickup_list):
         if not self.path_calculating and self.next_update <= 0:
             self.calculate_path()
@@ -71,10 +82,13 @@ class Enemy(Character):
         if self.path is None:
             self.draw()
             return
+
+        # Attack
         if self_pos.distance_to(pygame.Vector2(self.player.rect.center)) <= self.attack_range:
             self.draw()
             self.weapon.update(self.rect, self.player.rect.center - self_pos, True, delta_time)
         else:
+            # Use a stack to push/pop new points
             if self.next_pt is not None:
                 if self.next_pt == self_pos:
                     self.pop_next_point()
@@ -88,6 +102,7 @@ class Enemy(Character):
             self.draw()
             self.weapon.update(self.rect, self.player.rect.center - self_pos, False, delta_time)
 
+    # pop from the stack
     def pop_next_point(self):
         if self.path is None or self.path.nodes is None:
             self.next_pt = None
@@ -103,12 +118,14 @@ class Enemy(Character):
                 else:
                     self.next_pt = None
 
+    # Gets a random death sound
     def get_random_death_audio(self):
         if self.death_audios is not None and len(self.death_audios) > 0:
             return random.choice(self.death_audios)
         else:
             return None
 
+    # Clones this enemy
     def duplicate_as_new(self, center_x, center_y):
         rect = pygame.Rect((0, 0), self.rect.size)
         rect.center = (center_x, center_y)
@@ -117,9 +134,10 @@ class Enemy(Character):
         return Enemy(self.normal_sprite, self.shadow_sprite, self.hurt_sprite, rect, self.renderer, self.speed,
                      weapon, self.max_health, self.grid, self.mapper, self.player,
                      self.pathfinding_skip_threshold, self.attack_range, death_audios=self.death_audios,
-                     health_drop_amount_max=self.health_drop_amount_max)
+                     health_drop_amount_max=self.health_drop_amount_max, coin_drop_amount_max=self.coin_drop_amount_max)
 
 
+# A special variant of enemy: Boss
 class Boss(Enemy):
     def __init__(self, _sprites, scale, shadow_sprite, hurt_sprite, rect, renderer, speed, weapon, health, grid, mapper,
                  player, finish_callback):
@@ -141,15 +159,18 @@ class Boss(Enemy):
         self.scale = scale
         self.finish_callback = finish_callback
 
+    # The boss can teleport anywhere between 5 to 10 blocks to the player
     def teleport(self):
         player_x, player_y = self.player.rect.center[0], self.player.rect.center[1]
         self.rect.center = (
             player_x + random.randint(500, 1000) * self.get_random_pn1(),
             player_y + random.randint(500, 1000) * self.get_random_pn1())
 
+    # Gets random positive-negative-1
     def get_random_pn1(self):
         return random.choice((-1, 1))
 
+    # Updates this enemy
     def update(self, delta_time, kill_callback, pickups):
         self.sprite_change_timer -= delta_time
         if self.sprite_change_timer <= 0:
@@ -167,6 +188,7 @@ class Boss(Enemy):
                     self.increase = True
                     self.sprite_index = 0
 
+        # calls the super's update
         super(Boss, self).update(delta_time, kill_callback, pickups)
         if self.health <= 0:
             self.finish_callback()
@@ -176,6 +198,7 @@ class Boss(Enemy):
             self.teleport()
             self.current_tel_cooldown = self.teleport_cooldown
 
+    # Clone
     def duplicate_as_new(self, center_x, center_y):
         rect = pygame.Rect((0, 0), self.rect.size)
         rect.center = (center_x, center_y)
